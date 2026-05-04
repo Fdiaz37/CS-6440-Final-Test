@@ -52,24 +52,43 @@ async function loadData() {
     console.log(`Loaded ${allData.length} records`);
 }
 
-// Parse CSV with proper handling
+// Parse CSV with proper handling (respects quoted fields containing commas)
 function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',');
+    const headers = parseCSVLine(lines[0]);
     const data = [];
 
     for (let i = 1; i < lines.length; i++) {
         const obj = {};
-        const values = lines[i].split(',');
+        const values = parseCSVLine(lines[i]);
         headers.forEach((header, index) => {
             const value = values[index] ? values[index].trim() : '';
-            obj[header] = isNaN(value) ? value : parseFloat(value);
+            obj[header] = isNaN(value) || value === '' ? value : parseFloat(value);
         });
         if (obj['FIPS Code']) {
             data.push(obj);
         }
     }
     return data;
+}
+
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+            inQuotes = !inQuotes;
+        } else if (ch === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+        } else {
+            current += ch;
+        }
+    }
+    result.push(current);
+    return result;
 }
 
 // Populate dropdown filters
@@ -375,10 +394,12 @@ function renderScatterPlot(data) {
         return;
     }
     
+    const validData = data.filter(d => d[metricKey] != null && !isNaN(d[metricKey]) && d[metricKey] >= 0);
+
     const scatterData = [{
-        x: data.map(d => d[metricKey]),
-        y: data.map(d => d['Total ER Visits'] || 0),
-        text: data.map(d =>
+        x: validData.map(d => d[metricKey]),
+        y: validData.map(d => d['Total ER Visits'] || 0),
+        text: validData.map(d =>
             `<b>${d.County}, ${d.State}</b><br>` +
             `${metricKey}: ${d[metricKey] != null ? parseFloat(d[metricKey]).toFixed(2) : 'N/A'}%<br>` +
             `ER Visits: ${d['Total ER Visits']}<br>` +
@@ -390,7 +411,7 @@ function renderScatterPlot(data) {
         mode: 'markers',
         marker: {
             size: 8,
-            color: data.map(d => d.Year),
+            color: validData.map(d => d.Year),
             colorscale: [
                 [0, '#fee8c8'],
                 [0.5, '#fdbb84'],
@@ -416,13 +437,15 @@ function renderScatterPlot(data) {
             text: `Healthcare Burden vs. ${metricKey}`,
             font: { size: 16 }
         },
-        xaxis: { 
+        xaxis: {
             title: metricKey,
-            gridcolor: '#e5e5e5'
+            gridcolor: '#e5e5e5',
+            rangemode: 'nonnegative'
         },
-        yaxis: { 
+        yaxis: {
             title: 'Total ER Visits',
-            gridcolor: '#e5e5e5'
+            gridcolor: '#e5e5e5',
+            rangemode: 'nonnegative'
         },
         margin: { l: 60, r: 80, t: 40, b: 40 },
         height: 500,
