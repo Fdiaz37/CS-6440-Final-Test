@@ -396,6 +396,15 @@ function renderScatterPlot(data) {
     
     const validData = data.filter(d => d[metricKey] != null && !isNaN(d[metricKey]) && d[metricKey] >= 0);
 
+    const xVals = validData.map(d => d[metricKey]).sort((a, b) => a - b);
+    const yVals = validData.map(d => d['Total ER Visits'] || 0).sort((a, b) => a - b);
+    const xMid = xVals[Math.floor(xVals.length / 2)] ?? 0;
+    const yMid = yVals[Math.floor(yVals.length / 2)] ?? 0;
+    const xMax = xVals[xVals.length - 1] ?? 100;
+    const yMax = yVals[yVals.length - 1] ?? 100;
+    const xPad = (xMax - xMid) * 0.05;
+    const yPad = (yMax - yMid) * 0.05;
+
     const scatterData = [{
         x: validData.map(d => d[metricKey]),
         y: validData.map(d => d['Total ER Visits'] || 0),
@@ -440,12 +449,12 @@ function renderScatterPlot(data) {
         xaxis: {
             title: metricKey,
             gridcolor: '#e5e5e5',
-            rangemode: 'nonnegative'
+            range: [xMid - xPad, xMax + xPad]
         },
         yaxis: {
             title: 'Total ER Visits',
             gridcolor: '#e5e5e5',
-            rangemode: 'nonnegative'
+            range: [yMid - yPad, yMax + yPad]
         },
         margin: { l: 60, r: 80, t: 40, b: 40 },
         height: 500,
