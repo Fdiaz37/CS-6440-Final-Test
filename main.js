@@ -2,6 +2,7 @@
 let allData = [];
 let selectedCountyFIPS = null;
 let selectedCountyName = null;
+let choroplethInitialized = false;
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', async () => {
@@ -139,6 +140,7 @@ function renderChoropleth(data) {
 
     const choroplethData = [{
         type: 'choropleth',
+        geojson: 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json',
         locations: fipsValues,
         z: erVisits,
         text: hoverText,
@@ -187,22 +189,25 @@ function renderChoropleth(data) {
         plot_bgcolor: '#f9f9f9'
     };
 
-    Plotly.newPlot('choroplethMap', choroplethData, layout, { responsive: true });
-    
-    // Add click handler for county selection
-    const mapElement = document.getElementById('choroplethMap');
-    mapElement.on('plotly_click', function(data) {
-        if (data.points && data.points[0]) {
-            const fipsCode = data.points[0].location;
-            const countyData = allData.find(d => String(d['FIPS Code']).padStart(5, '0') === fipsCode);
-            if (countyData) {
-                selectedCountyFIPS = fipsCode;
-                selectedCountyName = `${countyData.County}, ${countyData.State}`;
-                console.log(`Selected: ${selectedCountyName}`);
-                renderCharts();
+    if (!choroplethInitialized) {
+        Plotly.newPlot('choroplethMap', choroplethData, layout, { responsive: true });
+        const mapElement = document.getElementById('choroplethMap');
+        mapElement.on('plotly_click', function(eventData) {
+            if (eventData.points && eventData.points[0]) {
+                const fipsCode = eventData.points[0].location;
+                const countyData = allData.find(d => String(d['FIPS Code']).padStart(5, '0') === fipsCode);
+                if (countyData) {
+                    selectedCountyFIPS = fipsCode;
+                    selectedCountyName = `${countyData.County}, ${countyData.State}`;
+                    console.log(`Selected: ${selectedCountyName}`);
+                    renderCharts();
+                }
             }
-        }
-    });
+        });
+        choroplethInitialized = true;
+    } else {
+        Plotly.react('choroplethMap', choroplethData, layout);
+    }
 }
 
 // Render time series for selected county
@@ -355,9 +360,9 @@ function renderScatterPlot(data) {
     const scatterData = [{
         x: data.map(d => d[metricKey]),
         y: data.map(d => d['Total ER Visits'] || 0),
-        text: data.map(d => 
+        text: data.map(d =>
             `<b>${d.County}, ${d.State}</b><br>` +
-            `${metricKey}: ${d[metricKey].toFixed(2)}%<br>` +
+            `${metricKey}: ${d[metricKey] != null ? parseFloat(d[metricKey]).toFixed(2) : 'N/A'}%<br>` +
             `ER Visits: ${d['Total ER Visits']}<br>` +
             `Poverty: ${d['Poverty Percentage']}%<br>` +
             `Unemployment: ${d['Unemployment Percentage']}%<br>` +
