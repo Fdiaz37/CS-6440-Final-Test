@@ -108,7 +108,7 @@ function getFilteredData() {
 
     return allData.filter(d => {
         if (stateFilter && d.State !== stateFilter) return false;
-        if (yearFilter && d.Year != yearFilter) return false;
+        if (yearFilter && String(d.Year) !== yearFilter) return false;
         return true;
     });
 }
@@ -270,7 +270,7 @@ function renderTimeSeries(data) {
 
     const layout = {
         title: `Time Series: ${selectedCountyName}`,
-        xaxis: { title: 'Year' },
+        xaxis: { title: 'Year', domain: [0, 0.78] },
         yaxis: { 
             title: 'ER Visits', 
             color: '#2563eb',
@@ -290,7 +290,7 @@ function renderTimeSeries(data) {
             side: 'right',
             position: 0.92
         },
-        margin: { l: 60, r: 100, t: 40, b: 40 },
+        margin: { l: 60, r: 160, t: 40, b: 40 },
         height: 500,
         hovermode: 'x unified',
         paper_bgcolor: '#fff',
