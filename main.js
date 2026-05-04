@@ -3,6 +3,8 @@ let allData = [];
 let selectedCountyFIPS = null;
 let selectedCountyName = null;
 let choroplethInitialized = false;
+let timeSeriesInitialized = false;
+let scatterInitialized = false;
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', async () => {
@@ -295,7 +297,13 @@ function renderTimeSeries(data) {
         plot_bgcolor: '#f9f9f9'
     };
 
-    Plotly.newPlot('timeSeriesChart', [trace1, trace2, trace3], layout, { responsive: true });
+    if (!timeSeriesInitialized) {
+        Plotly.newPlot('timeSeriesChart', [trace1, trace2, trace3], layout, { responsive: true });
+        timeSeriesInitialized = true;
+    } else {
+        Plotly.react('timeSeriesChart', [trace1, trace2, trace3], layout);
+    }
+    document.getElementById('selectedCountyInfo').textContent = selectedCountyName;
 }
 
 // Render empty time series placeholder
@@ -323,7 +331,12 @@ function renderEmptyTimeSeries() {
         height: 500
     };
 
-    Plotly.newPlot('timeSeriesChart', emptyData, layout, { responsive: true });
+    if (!timeSeriesInitialized) {
+        Plotly.newPlot('timeSeriesChart', emptyData, layout, { responsive: true });
+        timeSeriesInitialized = true;
+    } else {
+        Plotly.react('timeSeriesChart', emptyData, layout);
+    }
     document.getElementById('selectedCountyInfo').textContent = 'Select a county from the map above';
 }
 
@@ -353,7 +366,12 @@ function renderScatterPlot(data) {
             margin: { l: 60, r: 60, t: 40, b: 40 },
             height: 500
         };
-        Plotly.newPlot('scatterPlot', emptyData, layout, { responsive: true });
+        if (!scatterInitialized) {
+            Plotly.newPlot('scatterPlot', emptyData, layout, { responsive: true });
+            scatterInitialized = true;
+        } else {
+            Plotly.react('scatterPlot', emptyData, layout);
+        }
         return;
     }
     
@@ -413,7 +431,12 @@ function renderScatterPlot(data) {
         plot_bgcolor: '#f9f9f9'
     };
 
-    Plotly.newPlot('scatterPlot', scatterData, layout, { responsive: true });
+    if (!scatterInitialized) {
+        Plotly.newPlot('scatterPlot', scatterData, layout, { responsive: true });
+        scatterInitialized = true;
+    } else {
+        Plotly.react('scatterPlot', scatterData, layout);
+    }
 }
 
 // Error handling
